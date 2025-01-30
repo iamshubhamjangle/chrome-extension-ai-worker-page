@@ -1,13 +1,45 @@
-import React from "react";
+import { Camera } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
 export default function Popup() {
-  const [prompt, setPrompt] = React.useState("");
-  const [framework, setFramework] = React.useState("cypress");
-  const [screenshots, setScreenshots] = React.useState<string[]>([]);
-  const [response, setResponse] = React.useState("");
+  const [prompt, setPrompt] = useState("");
+  const [framework, setFramework] = useState("cypress");
+  const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [screenshot, setScreenshot] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [error, setError] = useState(null);
+  const [response, setResponse] = useState("");
+
+  useEffect(() => {
+    interface StorageChange {
+      [key: string]: chrome.storage.StorageChange;
+    }
+
+    // Initial Load
+    chrome.storage.local.get(["screenshot"], (result) => {
+      if (result.screenshot) {
+        setScreenshot(result.screenshot);
+      }
+    });
+
+    // Subsequences changes (May be not needed)
+    const handleStorageChange = (changes: StorageChange, namespace: string) => {
+      if (namespace === "local" && changes.screenshot) {
+        setScreenshot(changes.screenshot.newValue);
+        setIsCapturing(false);
+      }
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange);
+    };
+  }, []);
 
   const handleClearScreenshots = () => {
-    setScreenshots([]);
+    setScreenshot(null);
+    chrome.storage.local.remove("screenshot");
   };
 
   const handleCopyResponse = () => {
@@ -17,50 +49,42 @@ export default function Popup() {
   };
 
   // Event handler for capturing screenshot
-  async function handleScreenshotButtonClick() {
+  const handleScreenshotButtonClick = async () => {
+    setError(null);
+    setIsCapturing(true);
+
     try {
-      // Check if we can find an active tab first
       const tabs = await chrome.tabs.query({
         active: true,
         currentWindow: true,
       });
 
       if (!tabs || tabs.length === 0) {
-        console.debug("Please click on the webpage first, then try again");
-        return;
+        throw new Error("Please click on the webpage first, then try again");
       }
 
       const tab = tabs[0];
       if (!tab || !tab.id) {
-        console.debug(
+        throw new Error(
           "Cannot access the current tab. Please refresh the page."
         );
-        return;
       }
 
-      // Show loading status
-      console.debug("Preparing to capture...");
-
-      // First inject the content script to capture the screenshot
       const response = await chrome.runtime.sendMessage({
         action: "check-active-tab-is-selected",
       });
 
       if (response.error) {
+        console.log("check-active-tab-is-selected:", response.error);
         throw new Error(response.error);
       }
 
-      // Wait a moment for the content script to initialize
-      // await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Send message to start screenshot
       await chrome.tabs.sendMessage(tab.id, { action: "start-screenshot" });
-      console.debug("Capturing screenshot...");
-    } catch (err) {
-      console.error("Screenshot capture error:", err);
-      console.debug("Please select current tab and try again");
+    } catch (err: any) {
+      setError(err.message);
+      setIsCapturing(false);
     }
-  }
+  };
 
   const handleSubmit = async () => {
     console.log("Prompt:", prompt);
@@ -91,7 +115,9 @@ export default function Popup() {
       <h2 className="text-xl font-bold text-center">
         Screenshots to Automate Code
       </h2>
-      <p id="status"></p>
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>
+      )}
       <div className="relative">
         <button
           id="clear-screenshot-button"
@@ -100,10 +126,21 @@ export default function Popup() {
         >
           Clear
         </button>
-        <div
-          id="screenshot-container"
-          onClick={handleScreenshotButtonClick}
-        ></div>
+        {!screenshot && (
+          <div id="screenshot-container" onClick={handleScreenshotButtonClick}>
+            <Camera size={20} className="mr-2" />
+            {isCapturing ? "Capturing..." : "Click here to take a screenshot"}
+          </div>
+        )}
+        {screenshot && (
+          <div className="space-y-4">
+            <img
+              src={screenshot}
+              alt="Captured screenshot"
+              className="w-full rounded shadow-lg"
+            />
+          </div>
+        )}
       </div>
       <label htmlFor="prompt-textarea" className="text-orange-500">
         Write a prompt
