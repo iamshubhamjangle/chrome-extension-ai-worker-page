@@ -75,9 +75,12 @@ export default function Popup() {
       });
 
       if (response.error) {
-        console.log("check-active-tab-is-selected:", response.error);
+        console.log("check-active-tab-is-selected:", response);
         throw new Error(response.error);
       }
+
+      // Wait a moment for the content script to initialize
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       await chrome.tabs.sendMessage(tab.id, { action: "start-screenshot" });
     } catch (err: any) {
@@ -126,21 +129,26 @@ export default function Popup() {
         >
           Clear
         </button>
-        {!screenshot && (
-          <div id="screenshot-container" onClick={handleScreenshotButtonClick}>
+        <div
+          className="relative flex items-center min-h-[100px] border bg-[rgb(255,228,219)] my-2.5 p-3 rounded-lg border-dashed border-[coral] cursor-pointer"
+          onClick={handleScreenshotButtonClick}
+        >
+          {screenshot && (
+            <div className="flex flex-wrap gap-2 mr-3">
+              <div className="w-[100px] h-[100px] relative">
+                <img
+                  src={screenshot}
+                  alt="Captured screenshot"
+                  className="absolute w-full h-full object-contain rounded border border-solid border-orange-500"
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex items-center justify-center h-full mx-2">
             <Camera size={20} className="mr-2" />
             {isCapturing ? "Capturing..." : "Click here to take a screenshot"}
           </div>
-        )}
-        {screenshot && (
-          <div className="space-y-4">
-            <img
-              src={screenshot}
-              alt="Captured screenshot"
-              className="w-full rounded shadow-lg"
-            />
-          </div>
-        )}
+        </div>
       </div>
       <label htmlFor="prompt-textarea" className="text-orange-500">
         Write a prompt

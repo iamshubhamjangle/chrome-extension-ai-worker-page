@@ -33,29 +33,6 @@ button:active {
   border: 2px solid coral;
   background: rgba(0, 0, 255, 0.1);
 }
-#screenshot-container {
-  position: relative;
-  min-height: 100px;
-  max-height: 300px;
-  overflow: hidden;
-  border: 1px dashed coral;
-  border-radius: 0.5rem;
-  background-color: rgb(255, 228, 219);
-  margin: 10px 0;
-  padding: 1rem;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#screenshot-container:empty::before {
-  content: "Click here to Capture Screenshot";
-  color: coral;
-}
-#screenshot-container img {
-  max-width: 100%;
-  height: auto;
-}
 
 /* Response Container */
 #openai-response {
