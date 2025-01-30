@@ -1,5 +1,7 @@
 import { Camera } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface StorageDataType {
   id: number;
@@ -98,24 +100,42 @@ export default function Popup() {
   };
 
   const handleSubmit = async () => {
-    console.log("Prompt:", prompt);
-    console.log("Framework:", framework);
-    console.log("storageData:", storageData);
-
     try {
-      //   const res = await fetch("YOUR_API_ENDPOINT", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       prompt,
-      //       framework,
-      //       storageData,
-      //     }),
-      //   });
-      //   const data = await res.json();
-      //   console.log(data);
+      setResponse(""); // Reset response before starting new stream
+
+      const response = await fetch("http://localhost:4000/generate-test-case", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt,
+          framework,
+          data: storageData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("ReadableStream not supported in this browser.");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          setResponse((prevResponse) => prevResponse + chunk);
+        }
+      }
     } catch (error) {
       console.error("Error:", error);
     }
@@ -197,7 +217,9 @@ export default function Popup() {
         >
           Copy
         </button>
-        <div id="openai-response"></div>
+        <div id="openai-response">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{response}</ReactMarkdown>
+        </div>
       </div>
     </div>
   );
