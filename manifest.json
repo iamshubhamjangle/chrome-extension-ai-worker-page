@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "name in manifest.json",
-  "description": "description in manifest.json",
+  "name": "HTML & CSS Extractor",
+  "description": "Extract HTML and CSS of the current page on button click.",
   "options_ui": {
     "page": "src/pages/options/index.html"
   },
@@ -14,11 +14,11 @@
   "icons": {
     "128": "icon-128.png"
   },
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "scripting", "tabs", "storage"],
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*", "<all_urls>"],
-      "js": ["src/pages/content/index.tsx"],
+      "js": ["src/pages/content/index.jsx"],
       "css": ["contentStyle.css"]
     }
   ],

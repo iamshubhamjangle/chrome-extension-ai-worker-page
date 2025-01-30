@@ -10,9 +10,7 @@
     "manifest.json",
     "manifest.dev.json"
   ],
-  "ext": "tsx,css,html,ts,json",
-  "ignore": [
-    "src/**/*.spec.ts"
-  ],
+  "ext": "jsx,tsx,css,html,js,ts,json",
+  "ignore": ["src/**/*.spec.ts"],
   "exec": "vite build --config vite.config.chrome.ts --mode development"
 }
