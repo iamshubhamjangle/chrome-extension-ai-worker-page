@@ -51,7 +51,7 @@ export default function Popup() {
       }
 
       // Wait a moment for the content script to initialize
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Send message to start screenshot
       await chrome.tabs.sendMessage(tab.id, { action: "start-screenshot" });
