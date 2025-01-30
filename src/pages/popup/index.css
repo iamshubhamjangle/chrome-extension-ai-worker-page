@@ -34,22 +34,6 @@ button:active {
   background: rgba(0, 0, 255, 0.1);
 }
 
-/* Response Container */
-#openai-response {
-  padding: 35px 10px 10px 10px;
-  border: 1px solid #a1a1a1;
-  border-radius: 0.5rem;
-  margin: 10px 0;
-  background-color: #f9f9f9;
-  max-height: 200px;
-  overflow-y: auto;
-}
-#openai-response:empty::before {
-  content: "No response yet";
-  color: #666;
-  font-style: italic;
-}
-
 /* Debugging */
 #html,
 #css,

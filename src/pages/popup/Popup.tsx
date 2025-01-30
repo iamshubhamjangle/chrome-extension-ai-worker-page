@@ -1,6 +1,6 @@
-import { Camera } from "lucide-react";
+import { Camera, Copy, CopyIcon } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 interface StorageDataType {
@@ -17,6 +17,7 @@ export default function Popup() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState(null);
   const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     interface StorageChange {
@@ -53,9 +54,9 @@ export default function Popup() {
   };
 
   const handleCopyResponse = () => {
-    // if (response) {
-    //   navigator.clipboard.writeText(response);
-    // }
+    if (response) {
+      navigator.clipboard.writeText(response);
+    }
   };
 
   // Event handler for capturing screenshot
@@ -101,6 +102,7 @@ export default function Popup() {
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
       setResponse(""); // Reset response before starting new stream
 
       const response = await fetch("http://localhost:4000/generate-test-case", {
@@ -138,6 +140,8 @@ export default function Popup() {
       }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -205,22 +209,27 @@ export default function Popup() {
       </div>
       <button
         id="submit-button"
-        className="bg-orange-500 rounded-full px-6 py-2 text-white text-xs font-bold mx-auto block cursor-pointer"
+        className={`rounded-full px-6 py-2 text-white text-xs font-bold mx-auto block cursor-pointer ${
+          loading ? "bg-neutral-400" : "bg-orange-500"
+        }`}
         onClick={handleSubmit}
+        disabled={loading}
       >
-        Run it
+        {loading ? "Generating..." : "Run it"}
       </button>
-      <div className="relative">
-        <button
-          className="absolute cursor-pointer bg-orange-100 font-semibold text-[black] z-[1] m-[5px] px-2.5 py-[5px] rounded-lg border-[none] right-0 top-0"
-          onClick={handleCopyResponse}
-        >
-          Copy
-        </button>
-        <div id="openai-response">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{response}</ReactMarkdown>
+      {response && (
+        <div className="relative">
+          <button
+            className="absolute cursor-pointer bg-orange-100 font-semibold text-[black] z-[1] m-[5px] p-2.5 rounded-lg border-[none] right-0 top-0"
+            onClick={handleCopyResponse}
+          >
+            <CopyIcon size={14} />
+          </button>
+          <div className="border bg-[#f9f9f9] mx-0 my-2.5 pt-[35px] pb-2.5 px-2.5 rounded-lg border-solid border-[#a1a1a1]">
+            <Markdown remarkPlugins={[remarkGfm]}>{response}</Markdown>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
