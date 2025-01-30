@@ -239,7 +239,7 @@ try {
 
         try {
           // Get full page HTML and CSS
-          const pageContent = extractHTMLAndCSS();
+          // const pageContent = extractHTMLAndCSS();
           console.log("Extracted full page content");
 
           // Get selected area elements
@@ -305,17 +305,30 @@ try {
               );
 
               const dataUrl = canvas.toDataURL("image/png");
-              // Store all data in storage
-              await chrome.storage.local.set({
+
+              // Get existing screenshots array
+              const storageResponse = await chrome.storage.local.get(["data"]);
+              const data = storageResponse.data || [];
+
+              // Create new screenshot object
+              const newScreenshotData = {
+                id: Date.now(), // Unique identifier
                 screenshot: dataUrl,
                 selectedHTML: selectedHTML,
-                html: pageContent.html,
-                css: pageContent.css,
                 timestamp: new Date().toLocaleString(),
+              };
+
+              // Add new screenshot to array
+              data.push(newScreenshotData);
+
+              // Store updated array
+              await chrome.storage.local.set({
+                data,
               });
 
               console.log("Generated screenshot data length:", dataUrl.length);
               console.log("Screenshot and page data stored successfully");
+              console.log("Total data stored:", data.length);
             };
 
             img.src = response.screenshot;

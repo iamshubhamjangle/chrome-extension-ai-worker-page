@@ -1,11 +1,17 @@
 import { Camera } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
+interface StorageDataType {
+  id: number;
+  screenshot: string;
+  selectedHTML: string;
+  timestamp: string;
+}
+
 export default function Popup() {
   const [prompt, setPrompt] = useState("");
   const [framework, setFramework] = useState("cypress");
-  const [screenshots, setScreenshots] = useState<string[]>([]);
-  const [screenshot, setScreenshot] = useState(null);
+  const [storageData, setStorageData] = useState<StorageDataType[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [error, setError] = useState(null);
   const [response, setResponse] = useState("");
@@ -16,16 +22,18 @@ export default function Popup() {
     }
 
     // Initial Load
-    chrome.storage.local.get(["screenshot"], (result) => {
-      if (result.screenshot) {
-        setScreenshot(result.screenshot);
+    chrome.storage.local.get(["data"], (result) => {
+      if (result.data) {
+        setStorageData(result.data);
       }
     });
 
     // Subsequences changes (May be not needed)
     const handleStorageChange = (changes: StorageChange, namespace: string) => {
-      if (namespace === "local" && changes.screenshot) {
-        setScreenshot(changes.screenshot.newValue);
+      console.log("changes", changes);
+
+      if (namespace === "local" && changes.data) {
+        setStorageData(changes.data.newValue);
         setIsCapturing(false);
       }
     };
@@ -38,8 +46,8 @@ export default function Popup() {
   }, []);
 
   const handleClearScreenshots = () => {
-    setScreenshot(null);
-    chrome.storage.local.remove("screenshot");
+    setStorageData([]);
+    chrome.storage.local.remove("data");
   };
 
   const handleCopyResponse = () => {
@@ -92,7 +100,7 @@ export default function Popup() {
   const handleSubmit = async () => {
     console.log("Prompt:", prompt);
     console.log("Framework:", framework);
-    console.log("Screenshots:", screenshots);
+    console.log("storageData:", storageData);
 
     try {
       //   const res = await fetch("YOUR_API_ENDPOINT", {
@@ -103,7 +111,7 @@ export default function Popup() {
       //     body: JSON.stringify({
       //       prompt,
       //       framework,
-      //       screenshots,
+      //       storageData,
       //     }),
       //   });
       //   const data = await res.json();
@@ -130,18 +138,20 @@ export default function Popup() {
           Clear
         </button>
         <div
-          className="relative flex items-center min-h-[100px] border bg-[rgb(255,228,219)] my-2.5 p-3 rounded-lg border-dashed border-[coral] cursor-pointer"
+          className="relative flex overflow-x-auto items-center min-h-[100px] border bg-[rgb(255,228,219)] my-2.5 p-3 rounded-lg border-dashed border-[coral] cursor-pointer"
           onClick={handleScreenshotButtonClick}
         >
-          {screenshot && (
-            <div className="flex flex-wrap gap-2 mr-3">
-              <div className="w-[100px] h-[100px] relative">
-                <img
-                  src={screenshot}
-                  alt="Captured screenshot"
-                  className="absolute w-full h-full object-contain rounded border border-solid border-orange-500"
-                />
-              </div>
+          {storageData && storageData.length > 0 && (
+            <div className="flex gap-2 mr-3">
+              {storageData.map((data, index) => (
+                <div key={index} className="w-[100px] h-[100px] relative">
+                  <img
+                    src={data.screenshot}
+                    alt="Captured screenshot"
+                    className="absolute w-full h-full object-contain rounded border border-solid border-orange-500"
+                  />
+                </div>
+              ))}
             </div>
           )}
           <div className="flex items-center justify-center h-full mx-2">
